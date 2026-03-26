@@ -20,10 +20,23 @@ body {
     gap: 12px;
 }
 
+/* ── Header & Logo Modification ── */
 header {
     text-align: center;
     padding: 12px 0 4px;
+    position: relative; /* লোগোকে পজিশন করার জন্য জরুরি */
 }
+
+.top-left-logo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 45px; /* আপনার প্রয়োজন অনুযায়ী সাইজ পরিবর্তন করুন */
+    height: 45px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
 header h1 { font-size: 1.5rem; }
 header p  { font-size: 0.85rem; color: #888; margin-top: 4px; }
 
@@ -76,7 +89,7 @@ header p  { font-size: 0.85rem; color: #888; margin-top: 4px; }
 .status-bar.listening { color: #f59e0b; }
 .status-bar.thinking  { color: #60a5fa; }
 .status-bar.speaking  { color: #34d399; }
-.status-bar.error     { color: #f87171; }
+.status-bar.error      { color: #f87171; }
 
 /* ── Controls ── */
 .controls {
@@ -159,3 +172,12 @@ header p  { font-size: 0.85rem; color: #888; margin-top: 4px; }
     transition: all 0.2s;
 }
 .clear-btn:hover { border-color: #666; color: #aaa; }
+
+/* মোবাইল রেসপন্সিভ অ্যাডজাস্টমেন্ট */
+@media (max-width: 480px) {
+    .top-left-logo {
+        width: 35px;
+        height: 35px;
+    }
+    header h1 { font-size: 1.2rem; }
+}
