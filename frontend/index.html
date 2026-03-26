@@ -1,48 +1,142 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <img src="logo.jpg" alt="Logo" class="top-left-logo">
-    <title>Voice AI Agent</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="app">
-        <header>
-            <h1>🎙️ Voice AI Agent</h1>
-            <p>বাংলায় কথা বলুন — AI সাথে সাথে উত্তর দেবে</p>
-        </header>
+  <div class="layout">
 
-        <!-- Chat History -->
-        <div class="chat-box" id="chatBox">
-            <div class="message ai">
-                <span class="bubble">আস্সালামু আলাইকুম! আমি আপনার AI assistant। মাইক বাটন চেপে বাংলায় কথা বলুন। 😊</span>
-            </div>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">✦</div>
+          <span>AI Agent</span>
+        </div>
+        <button class="icon-btn" onclick="newChat()" title="নতুন চ্যাট">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-content">
+        <p class="sidebar-label">আজকে</p>
+        <div id="historyList">
+          <div class="history-item active">নতুন কথোপকথন</div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="model-badge">
+          <span class="status-dot"></span>
+          Llama 3.3 · Deepgram · ElevenLabs
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <button class="icon-btn" onclick="toggleSidebar()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+          </svg>
+        </button>
+        <span class="topbar-title">AI Agent</span>
+        <div id="topStatus"></div>
+      </header>
+
+      <!-- Chat -->
+      <div class="chat-area" id="chatArea">
+
+        <!-- Welcome screen -->
+        <div class="welcome" id="welcome">
+          <div class="welcome-glow"></div>
+          <div class="welcome-icon">✦</div>
+          <h2>কিভাবে সাহায্য করতে পারি?</h2>
+          <p>টাইপ করুন অথবা মাইক চালু করে কথা বলুন</p>
+          <div class="chips">
+            <button class="chip" onclick="sendSuggestion('বাংলাদেশের ইতিহাস সম্পর্কে বলো')">🇧🇩 বাংলাদেশের ইতিহাস</button>
+            <button class="chip" onclick="sendSuggestion('আমাকে একটি সুন্দর ছোট গল্প লিখে দাও')">📖 একটি গল্প লিখো</button>
+            <button class="chip" onclick="sendSuggestion('Python দিয়ে Hello World প্রোগ্রাম লিখো')">💻 কোড লিখো</button>
+            <button class="chip" onclick="sendSuggestion('আজকের আবহাওয়া কেমন হতে পারে?')">🌤 আবহাওয়া জিজ্ঞেস করো</button>
+          </div>
         </div>
 
-        <!-- Status Bar -->
-        <div class="status-bar" id="statusBar">প্রস্তুত</div>
+        <div id="messages"></div>
+      </div>
 
-        <!-- Controls -->
-        <div class="controls">
-            <!-- Text input -->
-            <div class="text-row">
-                <input type="text" id="textInput" placeholder="অথবা এখানে টাইপ করুন..." />
-                <button id="sendBtn" onclick="sendText()">পাঠান</button>
-            </div>
-
-            <!-- Mic button -->
-            <button class="mic-btn" id="micBtn" onclick="toggleMic()">
-                <span class="mic-icon">🎤</span>
-                <span class="mic-label" id="micLabel">চাপুন</span>
+      <!-- Input -->
+      <div class="input-wrap">
+        <div class="input-box" id="inputBox">
+          <textarea
+            id="textInput"
+            placeholder="একটি বার্তা লিখুন..."
+            rows="1"
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"
+          ></textarea>
+          <div class="input-btns">
+            <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="ভয়েস মোড">
+              <svg class="icon-mic" width="19" height="19" viewBox="0 0 24 24" fill="none">
+                <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor"/>
+                <path d="M5 10v1a7 7 0 0 0 14 0v-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <line x1="9" y1="23" x2="15" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
             </button>
-
-            <!-- Clear history -->
-            <button class="clear-btn" onclick="clearHistory()">🗑️ ইতিহাস মুছুন</button>
+            <button class="send-btn" id="sendBtn" onclick="sendText()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
-    </div>
+        <p class="disclaimer">AI ভুল তথ্য দিতে পারে — গুরুত্বপূর্ণ বিষয়ে যাচাই করুন।</p>
+      </div>
 
-    <script src="app.js"></script>
+    </main>
+  </div>
+
+  <!-- Voice Overlay -->
+  <div class="voice-overlay" id="voiceOverlay">
+    <div class="voice-modal">
+      <div class="orb-wrap">
+        <div class="orb" id="orb">
+          <div class="orb-pulse p1"></div>
+          <div class="orb-pulse p2"></div>
+          <div class="orb-core">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <rect x="9" y="2" width="6" height="11" rx="3" fill="white"/>
+              <path d="M5 10v1a7 7 0 0 0 14 0v-1" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="12" y1="19" x2="12" y2="23" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="9" y1="23" x2="15" y2="23" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <p class="v-title" id="vTitle">শুনছি...</p>
+      <p class="v-sub" id="vSub">কথা বলুন, থামলে নিজেই পাঠাবে</p>
+      <div class="sound-bars" id="soundBars">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <button class="v-close" onclick="stopVoice()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        বন্ধ করুন
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
