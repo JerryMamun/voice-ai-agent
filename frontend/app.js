@@ -1,6 +1,6 @@
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 // Replace this with your actual Render backend URL after deployment
-const API_URL = "https://your-backend-url.onrender.com";
+const API_URL = "https://voice-ai-agent-ga39.onrender.com/";
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function showLoader(show) {
