@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,42 +7,39 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>🎙️ Voice AI Agent</h1>
-        <p class="subtitle">Educational Demo — Powered by Groq LLM</p>
+    <div class="app">
+        <header>
+            <h1>🎙️ Voice AI Agent</h1>
+            <p>বাংলায় কথা বলুন — AI সাথে সাথে উত্তর দেবে</p>
+        </header>
 
-        <!-- Text Input Section -->
-        <div class="card">
-            <h2>💬 Text Chat</h2>
-            <textarea id="text" placeholder="Type your message here..." rows="3"></textarea>
-            <button id="sendBtn" onclick="sendText()">Send Message</button>
-        </div>
-
-        <!-- Audio Upload Section -->
-        <div class="card">
-            <h2>🎤 Voice Upload</h2>
-            <input type="file" id="audioFile" accept="audio/*" />
-            <button id="transcribeBtn" onclick="transcribeAudio()">Transcribe Audio</button>
-        </div>
-
-        <!-- Response Section -->
-        <div class="card" id="responseCard" style="display:none;">
-            <h2>🤖 AI Response</h2>
-            <div id="transcription" class="info-box" style="display:none;">
-                <strong>Transcription:</strong>
-                <p id="transcriptionText"></p>
-            </div>
-            <div class="response-box">
-                <p id="response"></p>
+        <!-- Chat History -->
+        <div class="chat-box" id="chatBox">
+            <div class="message ai">
+                <span class="bubble">আস্সালামু আলাইকুম! আমি আপনার AI assistant। মাইক বাটন চেপে বাংলায় কথা বলুন। 😊</span>
             </div>
         </div>
 
-        <!-- Error Section -->
-        <div id="errorCard" class="card error-card" style="display:none;">
-            <p id="errorText"></p>
-        </div>
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBar">প্রস্তুত</div>
 
-        <div id="loader" class="loader" style="display:none;">Thinking...</div>
+        <!-- Controls -->
+        <div class="controls">
+            <!-- Text input -->
+            <div class="text-row">
+                <input type="text" id="textInput" placeholder="অথবা এখানে টাইপ করুন..." />
+                <button id="sendBtn" onclick="sendText()">পাঠান</button>
+            </div>
+
+            <!-- Mic button -->
+            <button class="mic-btn" id="micBtn" onclick="toggleMic()">
+                <span class="mic-icon">🎤</span>
+                <span class="mic-label" id="micLabel">চাপুন</span>
+            </button>
+
+            <!-- Clear history -->
+            <button class="clear-btn" onclick="clearHistory()">🗑️ ইতিহাস মুছুন</button>
+        </div>
     </div>
 
     <script src="app.js"></script>
