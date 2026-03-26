@@ -1,12 +1,8 @@
-# Location: backend/app/services/stt.py
-
-from app.utils.logger import logger
-
+# Minimal STT service
 def transcribe_audio(audio_bytes: bytes) -> str:
-    try:
-        # Placeholder for Deepgram API call
-        logger.info("Transcribing audio...")
-        return "simulated transcription"
-    except Exception as e:
-        logger.error(f"Deepgram error: {str(e)}")
-        raise
+    """
+    Placeholder function for speech-to-text.
+    Currently returns dummy text.
+    Later replace with Deepgram / OpenAI / any STT.
+    """
+    return "Transcribed text goes here"
