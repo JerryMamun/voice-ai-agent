@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: voice-ai-backend
+    name: voice-ai-live-backend
     runtime: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn app.main:app --host 0.0.0.0 --port 10000"
@@ -10,4 +10,6 @@ services:
       - key: DEEPGRAM_API_KEY
         sync: false
       - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
         sync: false
