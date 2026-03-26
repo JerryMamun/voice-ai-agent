@@ -1,15 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Voice AI</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice AI Agent</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <h1>Voice AI Agent</h1>
+    <div class="container">
+        <h1>🎙️ Voice AI Agent</h1>
+        <p class="subtitle">Educational Demo — Powered by Groq LLM</p>
 
-    <input id="text" placeholder="Type something">
-    <button onclick="sendText()">Send</button>
+        <!-- Text Input Section -->
+        <div class="card">
+            <h2>💬 Text Chat</h2>
+            <textarea id="text" placeholder="Type your message here..." rows="3"></textarea>
+            <button id="sendBtn" onclick="sendText()">Send Message</button>
+        </div>
 
-    <p id="response"></p>
+        <!-- Audio Upload Section -->
+        <div class="card">
+            <h2>🎤 Voice Upload</h2>
+            <input type="file" id="audioFile" accept="audio/*" />
+            <button id="transcribeBtn" onclick="transcribeAudio()">Transcribe Audio</button>
+        </div>
+
+        <!-- Response Section -->
+        <div class="card" id="responseCard" style="display:none;">
+            <h2>🤖 AI Response</h2>
+            <div id="transcription" class="info-box" style="display:none;">
+                <strong>Transcription:</strong>
+                <p id="transcriptionText"></p>
+            </div>
+            <div class="response-box">
+                <p id="response"></p>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="errorCard" class="card error-card" style="display:none;">
+            <p id="errorText"></p>
+        </div>
+
+        <div id="loader" class="loader" style="display:none;">Thinking...</div>
+    </div>
 
     <script src="app.js"></script>
 </body>
