@@ -1,33 +1,35 @@
 import requests
 from app.config import settings
 
+SYSTEM_PROMPT = """তুমি একজন বন্ধুসুলভ AI assistant। 
+ব্যবহারকারী বাংলায় কথা বললে বাংলায় উত্তর দাও, ইংরেজিতে বললে ইংরেজিতে।
+উত্তর সংক্ষিপ্ত ও স্বাভাবিক কথোপকথনের মতো রাখো।"""
 
-def synthesize_speech(text: str) -> bytes:
-    """
-    ElevenLabs TTS — text থেকে audio bytes তৈরি করে।
-    বাংলা text সাপোর্ট করে (multilingual v2 model)।
-    """
-    if not settings.elevenlabs_api_key:
-        return b""
 
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}"
+def generate_reply(messages: list) -> str:
+    """
+    messages = [{"role": "user"/"assistant", "content": "..."}]
+    Conversation history সহ Groq-এ পাঠায়।
+    """
+    if not settings.groq_api_key:
+        return "Groq API key নেই।"
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
-        "xi-api-key": settings.elevenlabs_api_key,
+        "Authorization": f"Bearer {settings.groq_api_key}",
         "Content-Type": "application/json",
     }
     payload = {
-        "text": text,
-        "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.75,
-        },
+        "model": "llama-3.3-70b-versatile",
+        "messages": [{"role": "system", "content": SYSTEM_PROMPT}] + messages,
+        "max_tokens": 300,
+        "temperature": 0.7,
     }
 
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=30)
         response.raise_for_status()
-        return response.content  # raw MP3 bytes
+        return response.json()["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        print(f"ElevenLabs error: {e}")
-        return b""
+        print(f"Groq error: {e}")
+        return "দুঃখিত, এখন উত্তর দিতে পারছি না।"
