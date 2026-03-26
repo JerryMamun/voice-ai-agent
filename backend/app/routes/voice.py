@@ -1,53 +1,49 @@
+# Location: backend/app/routes/voice.py
+
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from app.services.stt import transcribe_audio
+from app.services.tts import synthesize_speech
+from app.utils.logger import logger
 from pydantic import BaseModel, field_validator
 
-from app.services.stt import speech_to_text
-from app.services.llm import generate_reply
-from app.services.tts import text_to_speech
+router = APIRouter(prefix="/voice")
 
-router = APIRouter()
-
-class TextRequest(BaseModel):
+# Pydantic model for TTS
+class TTSRequest(BaseModel):
     text: str
 
     @field_validator("text")
     @classmethod
-    def validate_text(cls, v):
+    def text_must_not_be_empty(cls, v):
         if not v.strip():
-            raise ValueError("Text cannot be empty")
+            raise ValueError("text cannot be empty")
         return v
 
-@router.post("/chat")
-async def voice_chat(file: UploadFile = File(...)):
+# STT Endpoint
+@router.post("/stt")
+async def stt_endpoint(file: UploadFile = File(...)):
+    logger.info("STT request received")
     try:
-        audio = await file.read()
-        if not audio:
-            raise HTTPException(status_code=400, detail="Empty audio")
-
-        text = speech_to_text(audio)
-        reply = generate_reply(text)
-        audio_url = text_to_speech(reply)
-
-        return {
-            "user_text": text,
-            "ai_reply": reply,
-            "audio_url": audio_url
-        }
-
+        audio_bytes = await file.read()
+        if not audio_bytes:
+            raise HTTPException(status_code=400, detail="Empty audio file")
+        text = transcribe_audio(audio_bytes)
+        logger.info(f"STT success, length={len(text)}")
+        return {"text": text}
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"STT failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.post("/text")
-def text_chat(req: TextRequest):
-    reply = generate_reply(req.text)
-    audio_url = text_to_speech(reply)
-
-   from app.utils.response import success_response
-
-return success_response({
-    "ai_reply": reply,
-    "audio_url": audio_url
-})
+# TTS Endpoint
+@router.post("/tts")
+async def tts_endpoint(request: TTSRequest):
+    logger.info("TTS request received")
+    try:
+        audio_url = synthesize_speech(request.text)
+        logger.info(f"TTS success: {audio_url}")
+        return {"audio_url": audio_url}
+    except Exception as e:
+        logger.error(f"TTS failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
