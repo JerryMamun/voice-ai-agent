@@ -1,61 +1,51 @@
-# Voice AI Agent
+# 🎙️ Live Voice AI Agent
 
-একটি শিক্ষামূলক Voice AI Agent — FastAPI (Render) + Vanilla JS (Vercel)।
+বাংলায় কথা বলুন — AI সাথে সাথে voice-এ উত্তর দেবে।
 
-## Architecture
+## Features
+- 🎤 Browser mic থেকে সরাসরি কথা বলা যায়
+- 🗣️ AI বাংলায় voice-এ reply দেয় (ElevenLabs TTS)
+- 💬 Conversation history মনে রাখে
+- ⌨️ Text chat-ও করা যায়
 
-```
-Frontend (Vercel)  →  Backend (Render)  →  Groq LLM API
-     HTML/JS              FastAPI              llama-3.3-70b
-```
-
-## API Endpoints
-
-| Method | Endpoint           | কাজ                              |
-|--------|--------------------|----------------------------------|
-| GET    | `/`                | Health check                     |
-| POST   | `/voice/text`      | Text পাঠাও, AI reply পাও         |
-| POST   | `/voice/transcribe`| Audio আপলোড করো, text পাও        |
-| POST   | `/voice/voice`     | Audio → STT → LLM → reply পাও   |
+## Tech Stack
+| Layer | Technology |
+|-------|-----------|
+| STT | Deepgram Nova-2 (বাংলা সাপোর্ট) |
+| LLM | Groq — llama-3.3-70b |
+| TTS | ElevenLabs multilingual v2 |
+| Backend | FastAPI → Render |
+| Frontend | Vanilla JS → Vercel |
 
 ## Deploy করার ধাপ
 
-### Step 1: Backend → Render
+### Step 1 — Backend → Render
+1. `backend/` ফোল্ডার GitHub-এ push করো
+2. Render-এ **Web Service** তৈরি করো
+   - Root Directory: `backend`
+   - Build: `pip install -r requirements.txt`
+   - Start: `uvicorn app.main:app --host 0.0.0.0 --port 10000`
+3. Environment Variables:
+   - `GROQ_API_KEY`
+   - `DEEPGRAM_API_KEY`
+   - `ELEVENLABS_API_KEY`
+   - `ELEVENLABS_VOICE_ID` (optional, default: Rachel)
+4. Deploy → URL পাবে: `https://voice-ai-live-backend.onrender.com`
 
-1. GitHub-এ `backend/` ফোল্ডারটি push করো
-2. [render.com](https://render.com) এ নতুন **Web Service** তৈরি করো
-3. Repository connect করো, root directory = `backend`
-4. Build Command: `pip install -r requirements.txt`
-5. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port 10000`
-6. Environment Variables যোগ করো:
-   - `GROQ_API_KEY` = তোমার Groq API key ([console.groq.com](https://console.groq.com))
-   - `DEEPGRAM_API_KEY` = (optional)
-   - `ELEVENLABS_API_KEY` = (optional)
-7. Deploy করো — URL পাবে: `https://voice-ai-backend.onrender.com`
-
-### Step 2: Frontend → Vercel
-
+### Step 2 — Frontend → Vercel
 1. `frontend/app.js` এর প্রথম লাইনে Render URL বসাও:
    ```js
-   const API_URL = "https://voice-ai-backend.onrender.com";
+   const API_URL = "https://voice-ai-live-backend.onrender.com";
    ```
-2. GitHub-এ `frontend/` ফোল্ডারটি push করো
-3. [vercel.com](https://vercel.com) এ নতুন Project তৈরি করো
-4. Root directory = `frontend` সেট করো
-5. Framework = **Other** রাখো
-6. Deploy করো!
+2. `frontend/` ফোল্ডার GitHub push করো
+3. Vercel-এ deploy করো (Root Directory: `frontend`)
 
 ## Local Development
-
 ```bash
-# Backend
 cd backend
 pip install -r requirements.txt
-cp .env.example .env   # এবং API key বসাও
+cp .env.example .env   # API keys বসাও
 uvicorn app.main:app --reload --port 8000
-
-# Frontend
-cd frontend
-# index.html সরাসরি browser-এ open করো অথবা VS Code Live Server ব্যবহার করো
-# app.js-এ API_URL = "http://localhost:8000" করো
 ```
+`frontend/app.js`-এ: `const API_URL = "http://localhost:8000";`
+তারপর `index.html` browser-এ open করো।
