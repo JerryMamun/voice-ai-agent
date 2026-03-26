@@ -1,125 +1,182 @@
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-// Replace this with your actual Render backend URL after deployment
-const API_URL = "https://voice-ai-agent-ga39.onrender.com";
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const API_URL = "https://your-backend-url.onrender.com";  // ← Render URL বসাও
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-function showLoader(show) {
-    document.getElementById("loader").style.display = show ? "block" : "none";
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let history = [];          // conversation history
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let isProcessing = false;
+
+// ── DOM REFS ──────────────────────────────────────────────────────────────────
+const chatBox   = document.getElementById("chatBox");
+const statusBar = document.getElementById("statusBar");
+const micBtn    = document.getElementById("micBtn");
+const micLabel  = document.getElementById("micLabel");
+const textInput = document.getElementById("textInput");
+const sendBtn   = document.getElementById("sendBtn");
+
+// ── STATUS HELPERS ────────────────────────────────────────────────────────────
+function setStatus(text, type = "") {
+    statusBar.textContent = text;
+    statusBar.className = "status-bar " + type;
 }
 
-function showError(message) {
-    const card = document.getElementById("errorCard");
-    document.getElementById("errorText").innerText = "⚠️ " + message;
-    card.style.display = "block";
+// ── CHAT UI ───────────────────────────────────────────────────────────────────
+function addMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = `message ${role}`;
+    const bubble = document.createElement("span");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    div.appendChild(bubble);
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return bubble;
 }
 
-function clearError() {
-    document.getElementById("errorCard").style.display = "none";
+// ── PLAY AUDIO ────────────────────────────────────────────────────────────────
+function playAudio(base64mp3, bubble) {
+    if (!base64mp3) return Promise.resolve();
+    return new Promise((resolve) => {
+        const audio = new Audio("data:audio/mp3;base64," + base64mp3);
+        bubble.classList.add("playing");
+        setStatus("AI বলছে...", "speaking");
+        audio.onended = () => {
+            bubble.classList.remove("playing");
+            setStatus("প্রস্তুত");
+            resolve();
+        };
+        audio.onerror = () => { resolve(); };
+        audio.play();
+    });
 }
 
-function showResponse(aiReply, transcription = null) {
-    const card = document.getElementById("responseCard");
-    const transcriptionDiv = document.getElementById("transcription");
-    const transcriptionText = document.getElementById("transcriptionText");
-    const responseEl = document.getElementById("response");
-
-    if (transcription) {
-        transcriptionDiv.style.display = "block";
-        transcriptionText.innerText = transcription;
-    } else {
-        transcriptionDiv.style.display = "none";
-    }
-
-    responseEl.innerText = aiReply;
-    card.style.display = "block";
-}
-
-// ─── TEXT CHAT ────────────────────────────────────────────────────────────────
-async function sendText() {
-    const text = document.getElementById("text").value.trim();
-    if (!text) {
-        showError("Please type a message first.");
+// ── PROCESS RESPONSE ──────────────────────────────────────────────────────────
+async function handleResponse(data) {
+    if (data.error) {
+        setStatus("⚠️ " + data.error, "error");
         return;
     }
 
-    clearError();
-    showLoader(true);
-    document.getElementById("sendBtn").disabled = true;
+    // Show user transcription (for voice input)
+    if (data.transcription && data.transcription !== textInput.value) {
+        // already added for text, skip duplicate
+    }
+
+    // Show AI reply
+    const aiBubble = addMessage("ai", data.ai_text);
+
+    // Save to history
+    history.push({ role: "assistant", content: data.ai_text });
+
+    // Play audio
+    await playAudio(data.audio_base64, aiBubble);
+}
+
+// ── TEXT SEND ─────────────────────────────────────────────────────────────────
+async function sendText() {
+    const text = textInput.value.trim();
+    if (!text || isProcessing) return;
+
+    textInput.value = "";
+    isProcessing = true;
+    sendBtn.disabled = true;
+
+    addMessage("user", text);
+    history.push({ role: "user", content: text });
+    setStatus("ভাবছি...", "thinking");
 
     try {
         const res = await fetch(`${API_URL}/voice/text`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, history }),
         });
-
-        if (!res.ok) {
-            throw new Error(`Server error: ${res.status}`);
-        }
-
         const data = await res.json();
-
-        if (data.status === "success") {
-            showResponse(data.data.ai_reply);
-        } else {
-            showError(data.message || "Unknown error from server.");
-        }
-    } catch (err) {
-        showError(err.message || "Could not connect to backend.");
+        await handleResponse(data);
+    } catch (e) {
+        setStatus("সংযোগ ব্যর্থ — Render URL ঠিক আছে কি?", "error");
     } finally {
-        showLoader(false);
-        document.getElementById("sendBtn").disabled = false;
+        isProcessing = false;
+        sendBtn.disabled = false;
     }
 }
 
-// ─── AUDIO UPLOAD ─────────────────────────────────────────────────────────────
-async function transcribeAudio() {
-    const fileInput = document.getElementById("audioFile");
-    const file = fileInput.files[0];
+// ── MIC TOGGLE ────────────────────────────────────────────────────────────────
+async function toggleMic() {
+    if (isProcessing) return;
 
-    if (!file) {
-        showError("Please select an audio file first.");
-        return;
-    }
+    if (isRecording) {
+        // Stop recording
+        mediaRecorder.stop();
+    } else {
+        // Start recording
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
 
-    clearError();
-    showLoader(true);
-    document.getElementById("transcribeBtn").disabled = true;
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
 
-    const formData = new FormData();
-    formData.append("file", file);
+            mediaRecorder.onstop = async () => {
+                // Stop mic stream
+                stream.getTracks().forEach(t => t.stop());
+                micBtn.classList.remove("active");
+                micLabel.textContent = "চাপুন";
+                isRecording = false;
+                isProcessing = true;
 
-    try {
-        const res = await fetch(`${API_URL}/voice/voice`, {
-            method: "POST",
-            body: formData,
-        });
+                const blob = new Blob(audioChunks, { type: "audio/webm" });
+                setStatus("পাঠাচ্ছি...", "thinking");
 
-        if (!res.ok) {
-            throw new Error(`Server error: ${res.status}`);
+                const formData = new FormData();
+                formData.append("file", blob, "audio.webm");
+                formData.append("history", JSON.stringify(history));
+
+                try {
+                    const res = await fetch(`${API_URL}/voice/talk`, {
+                        method: "POST",
+                        body: formData,
+                    });
+                    const data = await res.json();
+
+                    if (data.transcription) {
+                        addMessage("user", data.transcription);
+                        history.push({ role: "user", content: data.transcription });
+                    }
+
+                    await handleResponse(data);
+                } catch (e) {
+                    setStatus("সংযোগ ব্যর্থ — Render URL ঠিক আছে কি?", "error");
+                } finally {
+                    isProcessing = false;
+                }
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            micBtn.classList.add("active");
+            micLabel.textContent = "থামুন";
+            setStatus("শুনছি...", "listening");
+
+        } catch (e) {
+            setStatus("মাইক অ্যাক্সেস পাওয়া যায়নি — browser permission দিন", "error");
         }
-
-        const data = await res.json();
-
-        if (data.status === "success") {
-            showResponse(data.data.ai_reply, data.data.transcription);
-        } else {
-            showError(data.message || "Unknown error from server.");
-        }
-    } catch (err) {
-        showError(err.message || "Could not connect to backend.");
-    } finally {
-        showLoader(false);
-        document.getElementById("transcribeBtn").disabled = false;
     }
 }
 
-// ─── ENTER KEY SUPPORT ────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("text").addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendText();
-        }
-    });
+// ── CLEAR HISTORY ─────────────────────────────────────────────────────────────
+function clearHistory() {
+    history = [];
+    chatBox.innerHTML = "";
+    addMessage("ai", "ইতিহাস মুছে ফেলা হয়েছে। নতুন কথোপকথন শুরু করুন।");
+    setStatus("প্রস্তুত");
+}
+
+// ── ENTER KEY ─────────────────────────────────────────────────────────────────
+textInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendText();
 });
