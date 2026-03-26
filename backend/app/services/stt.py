@@ -1,19 +1,12 @@
-import requests
-from app.config import settings
+# Location: backend/app/services/stt.py
 
-def speech_to_text(audio_bytes: bytes) -> str:
-    if not settings.deepgram_api_key:
-        return "Simulated speech text"
+from app.utils.logger import logger
 
-    url = "https://api.deepgram.com/v1/listen"
-    headers = {
-        "Authorization": f"Token {settings.deepgram_api_key}",
-        "Content-Type": "audio/wav"
-    }
-
-    response = requests.post(url, headers=headers, data=audio_bytes)
-
+def transcribe_audio(audio_bytes: bytes) -> str:
     try:
-        return response.json()["results"]["channels"][0]["alternatives"][0]["transcript"]
-    except:
-        return "Could not transcribe"
+        # Placeholder for Deepgram API call
+        logger.info("Transcribing audio...")
+        return "simulated transcription"
+    except Exception as e:
+        logger.error(f"Deepgram error: {str(e)}")
+        raise
