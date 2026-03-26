@@ -228,30 +228,30 @@ async function toggleVoice() {
 
 async function startVoice() {
   try {
+    // Permission আগে চেক করো
+    const permission = await navigator.permissions.query({ name: 'microphone' });
+    
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    voiceActive = true;
-    micBtn.classList.add("active");
-
-    // Audio context for VAD
-    audioContext = new AudioContext();
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 512;
-    analyser.smoothingTimeConstant = 0.4;
-    const source = audioContext.createMediaStreamSource(stream);
-    source.connect(analyser);
-
-    // Show overlay
-    voiceOverlay.classList.add("show");
-
-    // Start listening
-    startListening();
-
-    // Store stream for cleanup
-    window._voiceStream = stream;
-
+    // ... বাকি কোড আগের মতো
   } catch (e) {
-    alert("মাইক অ্যাক্সেস পাওয়া যায়নি। Browser permission দিন।");
+    if (e.name === 'NotAllowedError') {
+      showPermissionError();
+    } else if (e.name === 'NotFoundError') {
+      alert("মাইক্রোফোন পাওয়া যায়নি। মাইক connected আছে কিনা দেখুন।");
+    } else {
+      alert("মাইক চালু করা যায়নি: " + e.message);
+    }
   }
+}
+
+function showPermissionError() {
+  const msg = `মাইক্রোফোন Permission দিন:
+
+1. Address bar এর 🔒 আইকনে ক্লিক করুন
+2. Microphone → Allow করুন  
+3. Page Reload করুন (F5)`;
+  alert(msg);
+}
 }
 
 function stopVoice() {
