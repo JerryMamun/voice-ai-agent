@@ -1,5 +1,5 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const API_URL = "https://your-backend-url.onrender.com";  // ← Render URL বসাও
+const API_URL = "https://voice-ai-agent-ga39.onrender.com";  // ← Render URL বসাও
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let history = [];          // conversation history
