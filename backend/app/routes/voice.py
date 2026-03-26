@@ -45,7 +45,9 @@ def text_chat(req: TextRequest):
     reply = generate_reply(req.text)
     audio_url = text_to_speech(reply)
 
-    return {
-        "ai_reply": reply,
-        "audio_url": audio_url
-    }
+   from app.utils.response import success_response
+
+return success_response({
+    "ai_reply": reply,
+    "audio_url": audio_url
+})
