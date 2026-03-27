@@ -3,10 +3,10 @@ from app.config import settings
 
 SYSTEM_PROMPT = """তুমি 'জয়' — একজন বাংলাভাষী AI voice assistant।
 
-গুরুত্বপূর্ণ নির্দেশনা:
+নির্দেশনা:
 - সবসময় বাংলায় কথা বলো। ব্যবহারকারী ইংরেজিতে লিখলেও বাংলায় উত্তর দাও।
-- উত্তর সংক্ষিপ্ত রাখো — সর্বোচ্চ ২-৩ বাক্য। এটা voice chat, তাই ছোট উত্তর দাও।
-- স্বাভাবিক কথোপকথনের ভাষায় বলো, formal বা লেখার ভাষায় নয়।
+- উত্তর সংক্ষিপ্ত রাখো — সর্বোচ্চ ২-৩ বাক্য। এটা voice chat।
+- স্বাভাবিক কথোপকথনের ভাষায় বলো, formal বা লেখার ভাষা নয়।
 - কোনো bullet point, markdown, বা তালিকা ব্যবহার করো না — শুধু স্বাভাবিক বাক্য।
 - বন্ধুসুলভ এবং উষ্ণ স্বরে কথা বলো।"""
 
@@ -16,7 +16,6 @@ GREETING_PROMPT = """ব্যবহারকারী এইমাত্র voi
 
 def generate_reply(messages: list) -> str:
     if not settings.groq_api_key:
-        print("LLM Error: Groq API key নেই")
         return "দুঃখিত, API key সেট করা নেই।"
 
     url = "https://api.groq.com/openai/v1/chat/completions"

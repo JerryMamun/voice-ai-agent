@@ -1,52 +1,42 @@
 import requests
+import io
 from app.config import settings
 
-# ElevenLabs Multilingual বাংলা-সক্ষম voice ID গুলো:
-# - Aria  : "9BWtsMINqrJLrRacOk9x"  (multilingual, natural)
-# - Laura : "FGY2WhTYpPnrIDTdsKH5"  (multilingual, warm)
-# - Charlie: "IKne3meq5aSn9XLyUdCD" (multilingual, male)
-# config.py তে ELEVENLABS_VOICE_ID এনভায়রনমেন্ট ভেরিয়েবল দিয়ে বদলানো যাবে
-
-DEFAULT_MULTILINGUAL_VOICE = "9BWtsMINqrJLrRacOk9x"  # Aria — multilingual
+# Groq TTS available voices (PlayAI multilingual — বাংলা সাপোর্ট করে)
+# Ref: https://console.groq.com/docs/text-speech
+DEFAULT_VOICE = "Cheyenne-PlayAI"   # female, natural, multilingual
+# অন্য options: "Atlas-PlayAI", "Briggs-PlayAI", "Orion-PlayAI"
 
 
 def synthesize_speech(text: str) -> bytes:
     """
-    ElevenLabs TTS — বাংলা text থেকে audio তৈরি করে।
-    eleven_multilingual_v2 model ব্যবহার করে (বাংলা সাপোর্ট)।
+    Groq TTS (PlayAI) — text থেকে MP3 audio তৈরি করে।
+    বাংলা সহ বহুভাষিক সাপোর্ট। শুধু GROQ_API_KEY লাগে।
     """
-    if not settings.elevenlabs_api_key:
-        print("TTS Error: ElevenLabs API key নেই")
+    if not settings.groq_api_key:
+        print("TTS Error: Groq API key নেই")
         return b""
 
-    # কনফিগে voice ID থাকলে সেটা, না হলে multilingual default
-    voice_id = settings.elevenlabs_voice_id
-    if not voice_id or voice_id == "21m00Tcm4TlvDq8ikWAM":  # Rachel = ইংরেজি only
-        voice_id = DEFAULT_MULTILINGUAL_VOICE
-
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    url = "https://api.groq.com/openai/v1/audio/speech"
     headers = {
-        "xi-api-key": settings.elevenlabs_api_key,
+        "Authorization": f"Bearer {settings.groq_api_key}",
         "Content-Type": "application/json",
     }
     payload = {
-        "text": text,
-        "model_id": "eleven_multilingual_v2",  # বাংলা সাপোর্টেড মডেল
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.75,
-            "style": 0.3,
-            "use_speaker_boost": True,
-        },
+        "model": "playai-tts",
+        "input": text,
+        "voice": DEFAULT_VOICE,
+        "response_format": "mp3",
     }
 
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=30)
         response.raise_for_status()
-        print(f"TTS success: {len(response.content)} bytes, voice: {voice_id}")
-        return response.content  # raw MP3 bytes
+        audio = response.content
+        print(f"TTS (Groq) success: {len(audio)} bytes")
+        return audio
     except Exception as e:
-        print(f"ElevenLabs TTS error: {e}")
+        print(f"Groq TTS error: {e}")
         if hasattr(e, 'response') and e.response is not None:
-            print(f"TTS response body: {e.response.text}")
+            print(f"TTS response: {e.response.text}")
         return b""
