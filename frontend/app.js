@@ -1,23 +1,7 @@
 // CONFIG
-const API_URL = "https://voice-ai-agent-ga39.onrender.com";
+const API_URL = "https://unlikely-becki-jerrymamun-59ee9598.koyeb.app";
 
-// Render wake-up on page load
-(function wakeServer() {
-  const banner = document.getElementById("wakeBanner");
-  fetch(API_URL + "/health", { method: "GET" })
-    .then(r => { if (!r.ok) throw new Error(); })
-    .catch(() => {
-      if (banner) banner.classList.add("show");
-      const retryWake = setInterval(() => {
-        fetch(API_URL + "/health", { method: "GET" })
-          .then(r => {
-            if (r.ok) { clearInterval(retryWake); if (banner) banner.classList.remove("show"); }
-          })
-          .catch(() => {});
-      }, 5000);
-      setTimeout(() => { clearInterval(retryWake); if (banner) banner.classList.remove("show"); }, 90000);
-    });
-})();
+// Koyeb always-on — no wake-up needed, banner removed
 
 function getSupportedMimeType() {
   const types = ["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus","audio/ogg"];
@@ -212,7 +196,7 @@ async function sendText() {
     if (data.audio_base64) await playAudio(data.audio_base64, bubble);
   } catch (e) {
     removeTyping();
-    addMessage("ai", "⚠️ সংযোগ ব্যর্থ। সার্ভার চালু হতে ৩০-৬০ সেকেন্ড লাগতে পারে, একটু পর আবার চেষ্টা করুন।");
+    addMessage("ai", "⚠️ সংযোগ ব্যর্থ। পেজ Reload করে আবার চেষ্টা করুন।");
   } finally {
     isProcessing = false;
     sendBtn.disabled = false;
@@ -368,7 +352,6 @@ async function processVoiceAudio() {
     history.push({ role: "user", content: data.transcription });
     const bubble = addMessage("ai", data.ai_text);
     history.push({ role: "assistant", content: data.ai_text });
-    // audio থাকলে বাজাবে, না থাকলে টেক্সট দেখিয়ে আবার শুনবে
     if (data.audio_base64) {
       await playAudio(data.audio_base64, bubble);
     } else {
