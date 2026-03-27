@@ -1,52 +1,56 @@
 import requests
+import io
 from app.config import settings
 
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "audio.webm") -> str:
     """
-    Deepgram STT — whisper-large model দিয়ে বাংলা সহ সব ভাষা সাপোর্ট করে।
+    Groq Whisper STT — বাংলা সহ সব ভাষা চমৎকার সাপোর্ট করে।
+    Groq API key দিয়েই কাজ করে, আলাদা Deepgram key লাগে না।
     """
-    if not settings.deepgram_api_key:
-        print("STT Error: Deepgram API key নেই")
+    if not settings.groq_api_key:
+        print("STT Error: Groq API key নেই")
         return ""
 
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "webm"
-    content_type_map = {
+    # Groq Whisper supported formats
+    mime_map = {
         "webm": "audio/webm",
         "mp4":  "audio/mp4",
         "m4a":  "audio/mp4",
         "ogg":  "audio/ogg",
         "wav":  "audio/wav",
         "mp3":  "audio/mpeg",
+        "flac": "audio/flac",
     }
-    content_type = content_type_map.get(ext, "audio/webm")
+    mime = mime_map.get(ext, "audio/webm")
+    safe_name = f"audio.{ext}"
 
-    url = "https://api.deepgram.com/v1/listen"
-    params = {
-        "model": "whisper-large",   # বাংলা সহ সব ভাষা সাপোর্ট
-        "language": "bn",           # বাংলা প্রাইমারি
-        "detect_language": "true",  # অটো ডিটেক্ট ব্যাকআপ
-        "smart_format": "true",
-        "punctuate": "true",
-    }
+    url = "https://api.groq.com/openai/v1/audio/transcriptions"
     headers = {
-        "Authorization": f"Token {settings.deepgram_api_key}",
-        "Content-Type": content_type,
+        "Authorization": f"Bearer {settings.groq_api_key}",
     }
 
     try:
+        files = {
+            "file": (safe_name, io.BytesIO(audio_bytes), mime),
+        }
+        data = {
+            "model": "whisper-large-v3",
+            "language": "bn",          # বাংলা প্রাইমারি
+            "response_format": "json",
+            "temperature": "0",
+        }
         response = requests.post(
-            url, params=params, headers=headers,
-            data=audio_bytes, timeout=30
+            url, headers=headers, files=files, data=data, timeout=30
         )
         response.raise_for_status()
         result = response.json()
-        transcript = (
-            result["results"]["channels"][0]["alternatives"][0]["transcript"]
-        )
-        text = transcript.strip()
-        print(f"STT result: '{text}'")
+        text = result.get("text", "").strip()
+        print(f"STT (Groq Whisper) result: '{text}'")
         return text
     except Exception as e:
-        print(f"Deepgram STT error: {e}")
+        print(f"Groq Whisper STT error: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"STT response: {e.response.text}")
         return ""

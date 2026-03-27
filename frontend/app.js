@@ -1,8 +1,6 @@
 // CONFIG
 const API_URL = "https://unlikely-becki-jerrymamun-59ee9598.koyeb.app";
 
-// Koyeb always-on — no wake-up needed, banner removed
-
 function getSupportedMimeType() {
   const types = ["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus","audio/ogg"];
   for (const type of types) {
@@ -101,7 +99,7 @@ function addMessage(role, text) {
   body.className = "msg-body";
   const name = document.createElement("div");
   name.className = "msg-name";
-  name.textContent = role === "user" ? "আপনি" : "AI Agent";
+  name.textContent = role === "user" ? "আপনি" : "জয়";
   const bubble = document.createElement("div");
   bubble.className = "msg-text";
   bubble.textContent = text;
@@ -126,7 +124,7 @@ function addTyping() {
   body.className = "msg-body";
   const name = document.createElement("div");
   name.className = "msg-name";
-  name.textContent = "AI Agent";
+  name.textContent = "জয়";
   const dots = document.createElement("div");
   dots.className = "typing-dots";
   dots.innerHTML = "<span></span><span></span><span></span>";
@@ -233,6 +231,28 @@ async function startVoice() {
     } catch (e) { analyser = null; }
     voiceOverlay.classList.add("show");
     window._voiceStream = stream;
+
+    // ── মাইক চালু হলেই agent greeting দেবে ──
+    setVoiceState("সংযোগ হচ্ছে...", "");
+    orb.classList.add("thinking");
+    try {
+      const res = await fetch(API_URL + "/voice/greet", { method: "POST" });
+      const data = await res.json();
+      orb.classList.remove("thinking");
+      if (data.ai_text) {
+        const bubble = addMessage("ai", data.ai_text);
+        history.push({ role: "assistant", content: data.ai_text });
+        if (data.audio_base64) {
+          await playAudio(data.audio_base64, bubble);
+          // playAudio শেষে startListening() নিজেই call হবে
+          return;
+        }
+      }
+    } catch (e) {
+      orb.classList.remove("thinking");
+      console.error("Greeting error:", e);
+    }
+
     startListening();
   } catch (e) {
     let msg = "মাইক্রোফোন চালু করা যায়নি।\n\n";
