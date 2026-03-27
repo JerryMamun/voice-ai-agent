@@ -6,7 +6,7 @@ app = FastAPI(title="Live Voice AI Agent")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # Vercel URL restrict করতে চাইলে এখানে বসাও
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -15,5 +15,9 @@ app.add_middleware(
 app.include_router(voice_router, prefix="/voice")
 
 @app.get("/")
+def root():
+    return {"status": "ok", "message": "Live Voice AI Agent হলo ✅"}
+
+@app.get("/health")
 def health():
-    return {"status": "ok", "message": "Live Voice AI Agent চালু আছে ✅"}
+    return {"status": "ok"}

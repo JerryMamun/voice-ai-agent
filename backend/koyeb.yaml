@@ -1,0 +1,37 @@
+# Koyeb deployment configuration
+# Docs: https://www.koyeb.com/docs
+
+name: voice-ai-agent
+
+services:
+  - name: api
+    type: web
+    instance_type: free       # free tier: eco-1x (512MB RAM)
+    regions:
+      - fra                   # Frankfurt — Asia-এর জন্য sin (Singapore) দিতে পারো
+    git:
+      repository: JerryMamun/voice-ai-agent
+      branch: main
+      build_command: ""
+      run_command: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+      dockerfile: backend/Dockerfile
+      dockerfile_target: ""
+    ports:
+      - port: 8000
+        protocol: http
+    routes:
+      - path: /
+        port: 8000
+    env:
+      - key: GROQ_API_KEY
+        secret: GROQ_API_KEY
+      - key: DEEPGRAM_API_KEY
+        secret: DEEPGRAM_API_KEY
+      - key: ELEVENLABS_API_KEY
+        secret: ELEVENLABS_API_KEY
+    health_checks:
+      - path: /health
+        port: 8000
+        protocol: http
+        initial_delay_seconds: 10
+        period_seconds: 30
