@@ -4,11 +4,11 @@ from app.config import settings
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "audio.webm") -> str:
     """
-    Deepgram STT — mobile soh sob format support.
-    filename theke content-type auto-detect kore.
+    Deepgram STT — whisper-large model দিয়ে বাংলা সহ সব ভাষা সাপোর্ট করে।
     """
     if not settings.deepgram_api_key:
-        return "Deepgram API key nei."
+        print("STT Error: Deepgram API key নেই")
+        return ""
 
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "webm"
     content_type_map = {
@@ -23,8 +23,9 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "audio.webm") -> str:
 
     url = "https://api.deepgram.com/v1/listen"
     params = {
-        "model": "nova-2",
-        "language": "multi",
+        "model": "whisper-large",   # বাংলা সহ সব ভাষা সাপোর্ট
+        "language": "bn",           # বাংলা প্রাইমারি
+        "detect_language": "true",  # অটো ডিটেক্ট ব্যাকআপ
         "smart_format": "true",
         "punctuate": "true",
     }
@@ -43,7 +44,9 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "audio.webm") -> str:
         transcript = (
             result["results"]["channels"][0]["alternatives"][0]["transcript"]
         )
-        return transcript.strip() if transcript.strip() else ""
+        text = transcript.strip()
+        print(f"STT result: '{text}'")
+        return text
     except Exception as e:
-        print(f"Deepgram error: {e}")
+        print(f"Deepgram STT error: {e}")
         return ""
