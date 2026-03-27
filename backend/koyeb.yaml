@@ -1,21 +1,18 @@
 # Koyeb deployment configuration
-# Docs: https://www.koyeb.com/docs
+# Docs: https://www.koyeb.com/docs/reference/koyeb-yaml
 
 name: voice-ai-agent
 
 services:
   - name: api
     type: web
-    instance_type: free       # free tier: eco-1x (512MB RAM)
+    instance_type: free        # free tier: nano (256MB RAM)
     regions:
-      - fra                   # Frankfurt — Asia-এর জন্য sin (Singapore) দিতে পারো
+      - sin                    # Singapore — Bangladesh-এর কাছের region
     git:
       repository: JerryMamun/voice-ai-agent
       branch: main
-      build_command: ""
-      run_command: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
-      dockerfile: backend/Dockerfile
-      dockerfile_target: ""
+      dockerfile: backend/Dockerfile   # root থেকে relative path
     ports:
       - port: 8000
         protocol: http
@@ -33,5 +30,8 @@ services:
       - path: /health
         port: 8000
         protocol: http
-        initial_delay_seconds: 10
+        initial_delay_seconds: 15
         period_seconds: 30
+        timeout_seconds: 5
+        success_threshold: 1
+        failure_threshold: 3
